@@ -1,5 +1,5 @@
-// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 11/25/2024 AT 3:12 PM PT //
-// Additions: Implemented "Complete Form" event
+// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 11/25/2024 AT 4:00 PM PT //
+// Additions: Implemented "Complete Form" event with dynamic form handling
 
 function removeEmptyProperties(obj) {
     if (typeof obj !== "object" || obj === null) return obj;
@@ -86,7 +86,7 @@ function getFBP() {
 // Function to generate FBP if not found
 function generateFBP() {
     const version = 'fb.1.';
-    const timestamp = Math.floor(new Date().getTime() / 1000);
+    const timestamp = Math.floor(Date.now() / 1000);
     const randomNumber = Math.random().toString(36).substring(2, 15);
     const fbp = version + timestamp + '.' + randomNumber;
 
@@ -99,14 +99,17 @@ function generateFBP() {
 async function getAdditionalParams() {
     let ipData = {};
     try {
+        // Fetch IPv4 Address
         const ipv4Response = await fetch('https://api.ipify.org?format=json');
         const ipv4Data = await ipv4Response.json();
         ipData.ipAddress = ipv4Data.ip;
 
+        // Fetch IPv6 Address
         const ipv6Response = await fetch('https://api64.ipify.org?format=json');
         const ipv6Data = await ipv6Response.json();
         ipData.ipv6Address = ipv6Data.ip;
 
+        // Fetch Geo data using IPv4
         const geoResponse = await fetch(`https://ipapi.co/${ipv4Data.ip}/json/`);
         const geoData = await geoResponse.json();
         ipData = {
@@ -181,11 +184,12 @@ async function trackPageView() {
 // Track initial page view on load
 trackPageView();
 
-// Implement "Complete Form" Event
-document.addEventListener("DOMContentLoaded", () => {
+// Function to initialize form event listener
+function initializeFormEventListener() {
     const form = document.querySelector(".react-form-contents");
 
     if (form) {
+        console.log("Form found. Adding submit event listener.");
         form.addEventListener("submit", async function(event) {
             event.preventDefault(); // Prevent default form submission
 
@@ -229,5 +233,32 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     } else {
         console.warn("Form with class 'react-form-contents' not found.");
+    }
+}
+
+// Function to observe the DOM for the form
+function waitForForm() {
+    const observer = new MutationObserver((mutations, obs) => {
+        const form = document.querySelector(".react-form-contents");
+        if (form) {
+            obs.disconnect(); // Stop observing once the form is found
+            initializeFormEventListener(); // Initialize the event listener
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+
+// Run the form listener initialization
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector(".react-form-contents");
+    if (form) {
+        initializeFormEventListener(); // If the form is already in the DOM
+    } else {
+        console.log("Waiting for form to load...");
+        waitForForm(); // Wait for the form to be dynamically added
     }
 });
