@@ -182,10 +182,12 @@ async function trackPageView() {
 trackPageView();
 
 // Implement "Complete Form" Event
-document.addEventListener("DOMContentLoaded", () => {
+// Function to initialize form event listener
+function initializeFormEventListener() {
     const form = document.querySelector(".react-form-contents");
 
     if (form) {
+        console.log("Form found. Adding submit event listener.");
         form.addEventListener("submit", async function(event) {
             event.preventDefault(); // Prevent default form submission
 
@@ -229,5 +231,32 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     } else {
         console.warn("Form with class 'react-form-contents' not found.");
+    }
+}
+
+// Function to observe the DOM for the form
+function waitForForm() {
+    const observer = new MutationObserver((mutations, obs) => {
+        const form = document.querySelector(".react-form-contents");
+        if (form) {
+            obs.disconnect(); // Stop observing once the form is found
+            initializeFormEventListener(); // Initialize the event listener
+        }
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+
+// Run the form listener initialization
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector(".react-form-contents");
+    if (form) {
+        initializeFormEventListener(); // If the form is already in the DOM
+    } else {
+        console.log("Waiting for form to load...");
+        waitForForm(); // Wait for the form to be dynamically added
     }
 });
