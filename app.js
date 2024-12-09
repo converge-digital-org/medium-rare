@@ -191,3 +191,45 @@ async function trackPageView() {
 
 // Track initial page view on load
 trackPageView();
+
+
+// Initialize Form Tracking
+function initializeFormEventListener() {
+    const form = document.querySelector(".react-form-contents");
+
+    if (form) {
+        console.log("Form found. Adding submit event listener.");
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const formData = {
+                first_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-fname-field")?.value || null,
+                last_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-lname-field")?.value || null,
+                email: document.querySelector("#email-yui_3_17_2_1_1733252193375_12107-field")?.value || null
+            };
+
+            const additionalParams = await getAdditionalParams();
+            const payload = {
+                ...formData,
+                ...additionalParams
+            };
+
+            console.log("Complete Form data captured:", payload);
+
+            // Send to Hightouch
+            window.htevents.track("complete_form", payload, {}, function() {
+                console.log("Complete Form event tracked:", payload);
+            });
+
+            // Optionally, submit the form after tracking
+            // form.submit();
+        });
+    } else {
+        console.warn("Form with class 'react-form-contents' not found.");
+    }
+}
+
+// Initialize form tracking
+document.addEventListener("DOMContentLoaded", () => {
+    initializeFormEventListener();
+});
