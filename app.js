@@ -184,7 +184,7 @@ async function trackPageView() {
             ip: additionalParams.ipAddress
         },
         function() {
-            //console.log("Page view tracked:", document.title);
+            console.log("Page view tracked:", document.title);
         }
     );
 }
@@ -220,9 +220,6 @@ function initializeFormEventListener() {
             window.htevents.track("complete_form", payload, {}, function() {
                 console.log("Complete Form event tracked:", payload);
             });
-
-            // Optionally, submit the form after tracking
-            // form.submit();
         });
     } else {
         console.warn("Form with class 'react-form-contents' not found.");
@@ -230,6 +227,4 @@ function initializeFormEventListener() {
 }
 
 // Initialize form tracking
-document.addEventListener("DOMContentLoaded", () => {
     initializeFormEventListener();
-});
