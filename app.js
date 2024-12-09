@@ -1,11 +1,20 @@
-// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 11/20/2024 AT 2:12 PM PT //
+// HIGHTOUCH EVENTS APP.JS FILE –– REFINED ON 11/25/2024 //
 
+console.log("Hightouch Events script initialized.");
+
+// Function to remove empty properties from objects
 function removeEmptyProperties(obj) {
     if (typeof obj !== "object" || obj === null) return obj;
-    for (const key in obj) if (obj.hasOwnProperty(key)) {
-        const value = obj[key];
-        typeof value === "object" && value !== null && (obj[key] = removeEmptyProperties(value));
-        (obj[key] === null || obj[key] === "" || obj[key] === undefined) && delete obj[key];
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            const value = obj[key];
+            if (typeof value === "object" && value !== null) {
+                obj[key] = removeEmptyProperties(value);
+            }
+            if (obj[key] === null || obj[key] === "" || obj[key] === undefined) {
+                delete obj[key];
+            }
+        }
     }
     return Object.keys(obj).length === 0 && obj.constructor === Object ? {} : obj;
 }
@@ -41,139 +50,36 @@ function getSessionId() {
     return sessionId;
 }
 
-// Function to get "user_id" from the data layer
-function getUserIdFromDataLayer() {
-    if (window.dataLayer) {
-        const userEvent = window.dataLayer.find(item => item[2] && item[2].user_id);
-        return userEvent ? userEvent[2].user_id : null;
-    }
-    return null;
-}
-
-// Function to generate FBC (Facebook Click ID) parameter
-function getFBC(fbclid) {
-    const cookieValue = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('_fbc='))
-        ?.split('=')[1];
-
-    return cookieValue || generateFBC(fbclid);
-}
-
-// Function to generate FBC if not found
-function generateFBC(fbclid) {
-    if (!fbclid) return null;
-    const domain = window.location.hostname;
-    const timestamp = Math.floor(Date.now() / 1000);
-    const fbc = `fb.${domain}.${timestamp}.${fbclid}`;
-
-    document.cookie = `_fbc=${fbc}; path=/; expires=${new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString()}; SameSite=Lax`;
-
-    return fbc;
-}
-
-// Function to get or generate FBP (Facebook Browser ID) parameter
-function getFBP() {
-    const cookieValue = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('_fbp='))
-        ?.split('=')[1];
-
-    return cookieValue || generateFBP();
-}
-
-// Function to generate FBP if not found
-function generateFBP() {
-    const version = 'fb.1.';
-    const timestamp = Math.floor(new Date().getTime() / 1000);
-    const randomNumber = Math.random().toString(36).substring(2, 15);
-    const fbp = version + timestamp + '.' + randomNumber;
-
-    document.cookie = `_fbp=${fbp}; path=/; expires=${new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString()}; SameSite=Lax`;
-
-    return fbp;
-}
-
-// Function to get additional parameters (includes only "user_id")
+// Helper function to fetch additional parameters (e.g., geo, IP)
 async function getAdditionalParams() {
-    let ipData = {};
     try {
-        // Fetch IPv4 Address
-        const ipv4Response = await fetch('https://api.ipify.org?format=json');
-        const ipv4Data = await ipv4Response.json();
-        ipData.ipAddress = ipv4Data.ip;
+        const ipResponse = await fetch("https://api.ipify.org?format=json");
+        const ipData = await ipResponse.json();
 
-        // Fetch IPv6 Address
-        const ipv6Response = await fetch('https://api64.ipify.org?format=json');
-        const ipv6Data = await ipv6Response.json();
-        ipData.ipv6Address = ipv6Data.ip;
-
-        // Fetch Geo data using IPv4
-        const geoResponse = await fetch(`https://ipapi.co/${ipv4Data.ip}/json/`);
+        const geoResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
         const geoData = await geoResponse.json();
-        ipData = {
-            ...ipData,
+
+        return {
+            ipAddress: ipData.ip,
             userCountry: geoData.country_name,
             userRegion: geoData.region,
             userCity: geoData.city,
-            userPostal: geoData.postal
+            userPostal: geoData.postal,
+            device_id: getDeviceId()
         };
     } catch (error) {
-        console.error("Error fetching IP and geo data:", error);
+        console.error("Error fetching additional parameters:", error);
+        return {};
     }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const fbclid = urlParams.get('fbclid');
-
-    return {
-        ...ipData,
-        utmParameters: {
-            source: urlParams.get('utm_source'),
-            medium: urlParams.get('utm_medium'),
-            campaign: urlParams.get('utm_campaign'),
-            id: urlParams.get('utm_id'),
-            term: urlParams.get('utm_term'),
-            content: urlParams.get('utm_content'),
-            fbclid: fbclid,
-            gclid: urlParams.get('gclid'),
-            atrefid: urlParams.get('atrefid'),
-            ad_id: urlParams.get('ad_id'),
-            adset_id: urlParams.get('adset_id'),
-            campaign_id: urlParams.get('campaign_id'),
-            ad_name: urlParams.get('ad_name'),
-            adset_name: urlParams.get('adset_name'),
-            campaign_name: urlParams.get('campaign_name'),
-            placement: urlParams.get('placement'),
-            site_source_name: urlParams.get('site_source_name'),
-            gbraid: urlParams.get('gbraid'),
-            wbraid: urlParams.get('wbraid'),
-            ttclid: urlParams.get('ttclid'),
-            sccid: urlParams.get('ScCid')
-        },
-        fbc: getFBC(fbclid),
-        fbp: getFBP(),
-        device_id: getDeviceId(),
-        directory: window.location.pathname.split('/')[1],
-        user_id: getUserIdFromDataLayer()
-    };
-}
-
-// Function to get the category from the dataLayer
-function getCategoryFromDataLayer() {
-    if (window.dataLayer) {
-        const ecommPageType = window.dataLayer.find(item => item.ecomm_pagetype);
-        return ecommPageType ? ecommPageType.ecomm_pagetype : 'Unknown';
-    }
-    return 'Unknown';
 }
 
 // Function to track page views
 async function trackPageView() {
     const additionalParams = await getAdditionalParams();
     const eventName = document.title;
-    const eventCategory = getCategoryFromDataLayer();
+
     window.htevents.page(
-        eventCategory,
+        "Page View",
         eventName,
         {
             hostname: window.location.hostname,
@@ -184,10 +90,93 @@ async function trackPageView() {
             ip: additionalParams.ipAddress
         },
         function() {
-            //console.log("Page view tracked:", document.title);
+            console.log("Page view event successfully tracked:", eventName);
         }
     );
 }
 
 // Track initial page view on load
-trackPageView();
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("Tracking page view event.");
+    trackPageView();
+});
+
+// Function to track Complete Form event
+function initializeFormEventListener() {
+    const form = document.querySelector(".react-form-contents");
+
+    if (!form) {
+        console.warn("Form with class 'react-form-contents' not found.");
+        return;
+    }
+
+    console.log("Form found. Adding submit event listener.");
+
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault(); // Prevent default form submission
+
+        console.log("Form submitted. Capturing data...");
+        const formData = {
+            first_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-fname-field")?.value || null,
+            last_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-lname-field")?.value || null,
+            email: document.querySelector("#email-yui_3_17_2_1_1733252193375_12107-field")?.value || null,
+            phone_country: document.querySelector("#phone-c48ec3b8-6c62-4462-aa21-af587054f3ef-country-code-field")?.value || null,
+            phone_number: document.querySelector("#phone-c48ec3b8-6c62-4462-aa21-af587054f3ef-input-field")?.value || null
+        };
+
+        console.log("Captured form data:", formData);
+
+        // Fetch additional parameters
+        const additionalParams = await getAdditionalParams();
+        const payload = { ...formData, ...additionalParams };
+
+        console.log("Complete Form payload prepared:", payload);
+
+        // Push to dataLayer
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ event: "complete_form", form_data: payload });
+
+        console.log("Complete Form event pushed to dataLayer.");
+
+        // Send to Hightouch
+        window.htevents.track(
+            "complete_form",
+            payload,
+            {},
+            function() {
+                console.log("Complete Form event successfully tracked to Hightouch:", payload);
+            }
+        );
+
+        // Optionally submit form after tracking
+        // form.submit();
+    });
+}
+
+// Observe DOM for dynamically added forms
+function observeForm() {
+    console.log("Observing for form with MutationObserver...");
+
+    const observer = new MutationObserver(() => {
+        const form = document.querySelector(".react-form-contents");
+        if (form) {
+            console.log("Form detected via MutationObserver.");
+            observer.disconnect(); // Stop observing
+            initializeFormEventListener(); // Attach event listener
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Initialize form tracking on DOMContentLoaded
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector(".react-form-contents");
+    if (form) {
+        console.log("Form found during DOMContentLoaded.");
+        initializeFormEventListener();
+    } else {
+        console.warn("Form not found during DOMContentLoaded. Setting up observer...");
+        observeForm();
+    }
+});
