@@ -1,11 +1,17 @@
-// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 12/9/2024 AT 8:38 AM PT //
+// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 11/25/2024 AT 4:00 PM PT //
+
+console.log("Hightouch Events script initialized.");
 
 function removeEmptyProperties(obj) {
     if (typeof obj !== "object" || obj === null) return obj;
     for (const key in obj) if (obj.hasOwnProperty(key)) {
         const value = obj[key];
-        typeof value === "object" && value !== null && (obj[key] = removeEmptyProperties(value));
-        (obj[key] === null || obj[key] === "" || obj[key] === undefined) && delete obj[key];
+        if (typeof value === "object" && value !== null) {
+            obj[key] = removeEmptyProperties(value);
+        }
+        if (obj[key] === null || obj[key] === "" || obj[key] === undefined) {
+            delete obj[key];
+        }
     }
     return Object.keys(obj).length === 0 && obj.constructor === Object ? {} : obj;
 }
@@ -184,10 +190,48 @@ async function trackPageView() {
             ip: additionalParams.ipAddress
         },
         function() {
-            //console.log("Page view tracked:", document.title);
+            console.log("Page view tracked:", document.title);
         }
     );
 }
 
+// Function to track Complete Form event
+function initializeFormEventListener() {
+    const form = document.querySelector(".react-form-contents");
+    if (!form) {
+        console.warn("Form with class 'react-form-contents' not found.");
+        return;
+    }
+
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault(); // Prevent default form submission
+        const formData = {
+            first_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-fname-field")?.value || null,
+            last_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-lname-field")?.value || null,
+            email: document.querySelector("#email-yui_3_17_2_1_1733252193375_12107-field")?.value || null
+        };
+
+        const additionalParams = await getAdditionalParams();
+        const payload = { ...formData, ...additionalParams };
+
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ event: "complete_form", form_data: payload });
+
+        window.htevents.track(
+            "complete_form",
+            payload,
+            {},
+            function() {
+                console.log("Complete Form tracked:", payload);
+            }
+        );
+    });
+}
+
 // Track initial page view on load
 trackPageView();
+
+// Initialize form tracking
+document.addEventListener("DOMContentLoaded", () => {
+    initializeFormEventListener();
+});
