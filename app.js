@@ -146,7 +146,9 @@ async function getAdditionalParams() {
             placement: urlParams.get('placement'),
             site_source_name: urlParams.get('site_source_name'),
             gbraid: urlParams.get('gbraid'),
-            wbraid: urlParams.get('wbraid')
+            wbraid: urlParams.get('wbraid'),
+            ttclid: urlParams.get('ttclid'),
+            sccid: urlParams.get('ScCid')
         },
         fbc: getFBC(fbclid),
         fbp: getFBP(),
