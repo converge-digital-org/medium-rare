@@ -1,4 +1,5 @@
-// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 11/20/2024 AT 2:12 PM PT //
+// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 11/25/2024 AT 3:12 PM PT //
+// Additions: Implemented "Complete Form" event
 
 function removeEmptyProperties(obj) {
     if (typeof obj !== "object" || obj === null) return obj;
@@ -98,17 +99,14 @@ function generateFBP() {
 async function getAdditionalParams() {
     let ipData = {};
     try {
-        // Fetch IPv4 Address
         const ipv4Response = await fetch('https://api.ipify.org?format=json');
         const ipv4Data = await ipv4Response.json();
         ipData.ipAddress = ipv4Data.ip;
 
-        // Fetch IPv6 Address
         const ipv6Response = await fetch('https://api64.ipify.org?format=json');
         const ipv6Data = await ipv6Response.json();
         ipData.ipv6Address = ipv6Data.ip;
 
-        // Fetch Geo data using IPv4
         const geoResponse = await fetch(`https://ipapi.co/${ipv4Data.ip}/json/`);
         const geoData = await geoResponse.json();
         ipData = {
@@ -158,15 +156,6 @@ async function getAdditionalParams() {
     };
 }
 
-// Function to get the category from the dataLayer
-function getCategoryFromDataLayer() {
-    if (window.dataLayer) {
-        const ecommPageType = window.dataLayer.find(item => item.ecomm_pagetype);
-        return ecommPageType ? ecommPageType.ecomm_pagetype : 'Unknown';
-    }
-    return 'Unknown';
-}
-
 // Function to track page views
 async function trackPageView() {
     const additionalParams = await getAdditionalParams();
@@ -191,3 +180,54 @@ async function trackPageView() {
 
 // Track initial page view on load
 trackPageView();
+
+// Implement "Complete Form" Event
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector(".react-form-contents");
+
+    if (form) {
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const formData = {
+                first_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-fname-field")?.value || null,
+                last_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-lname-field")?.value || null,
+                email: document.querySelector("#email-yui_3_17_2_1_1733252193375_12107-field")?.value || null,
+                phone_country: document.querySelector("#phone-c48ec3b8-6c62-4462-aa21-af587054f3ef-country-code-field")?.value || null,
+                phone_number: document.querySelector("#phone-c48ec3b8-6c62-4462-aa21-af587054f3ef-input-field")?.value || null
+            };
+
+            const additionalParams = await getAdditionalParams();
+            const payload = {
+                ...formData,
+                ...additionalParams
+            };
+
+            console.log("Complete Form data captured:", payload);
+
+            // Push event to dataLayer
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+                event: "complete_form",
+                form_data: payload
+            });
+
+            console.log("Complete Form event pushed to dataLayer:", payload);
+
+            // Send event to Hightouch
+            window.htevents.track(
+                "complete_form",
+                payload,
+                {},
+                function() {
+                    console.log("Complete Form event successfully tracked to Hightouch:", payload);
+                }
+            );
+
+            // Optionally, submit the form after tracking
+            // form.submit();
+        });
+    } else {
+        console.warn("Form with class 'react-form-contents' not found.");
+    }
+});
