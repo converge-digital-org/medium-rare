@@ -98,11 +98,18 @@ function generateFBP() {
 async function getAdditionalParams() {
     let ipData = {};
     try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        ipData.ipAddress = data.ip;
+        // Fetch IPv4 Address
+        const ipv4Response = await fetch('https://api.ipify.org?format=json');
+        const ipv4Data = await ipv4Response.json();
+        ipData.ipAddress = ipv4Data.ip;
 
-        const geoResponse = await fetch(`https://ipapi.co/${data.ip}/json/`);
+        // Fetch IPv6 Address
+        const ipv6Response = await fetch('https://api64.ipify.org?format=json');
+        const ipv6Data = await ipv6Response.json();
+        ipData.ipv6Address = ipv6Data.ip;
+
+        // Fetch Geo data using IPv4
+        const geoResponse = await fetch(`https://ipapi.co/${ipv4Data.ip}/json/`);
         const geoData = await geoResponse.json();
         ipData = {
             ...ipData,
