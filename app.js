@@ -1,5 +1,4 @@
-// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 11/25/2024 AT 4:00 PM PT //
-// Additions: Implemented "Complete Form" event with dynamic form handling
+// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 12/9/2024 AT 8:22 AM PT //
 
 function removeEmptyProperties(obj) {
     if (typeof obj !== "object" || obj === null) return obj;
@@ -86,7 +85,7 @@ function getFBP() {
 // Function to generate FBP if not found
 function generateFBP() {
     const version = 'fb.1.';
-    const timestamp = Math.floor(Date.now() / 1000);
+    const timestamp = Math.floor(new Date().getTime() / 1000);
     const randomNumber = Math.random().toString(36).substring(2, 15);
     const fbp = version + timestamp + '.' + randomNumber;
 
@@ -159,6 +158,15 @@ async function getAdditionalParams() {
     };
 }
 
+// Function to get the category from the dataLayer
+function getCategoryFromDataLayer() {
+    if (window.dataLayer) {
+        const ecommPageType = window.dataLayer.find(item => item.ecomm_pagetype);
+        return ecommPageType ? ecommPageType.ecomm_pagetype : 'Unknown';
+    }
+    return 'Unknown';
+}
+
 // Function to track page views
 async function trackPageView() {
     const additionalParams = await getAdditionalParams();
@@ -183,82 +191,3 @@ async function trackPageView() {
 
 // Track initial page view on load
 trackPageView();
-
-// Function to initialize form event listener
-function initializeFormEventListener() {
-    const form = document.querySelector(".react-form-contents");
-
-    if (form) {
-        console.log("Form found. Adding submit event listener.");
-        form.addEventListener("submit", async function(event) {
-            event.preventDefault(); // Prevent default form submission
-
-            const formData = {
-                first_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-fname-field")?.value || null,
-                last_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-lname-field")?.value || null,
-                email: document.querySelector("#email-yui_3_17_2_1_1733252193375_12107-field")?.value || null,
-                phone_country: document.querySelector("#phone-c48ec3b8-6c62-4462-aa21-af587054f3ef-country-code-field")?.value || null,
-                phone_number: document.querySelector("#phone-c48ec3b8-6c62-4462-aa21-af587054f3ef-input-field")?.value || null
-            };
-
-            const additionalParams = await getAdditionalParams();
-            const payload = {
-                ...formData,
-                ...additionalParams
-            };
-
-            console.log("Complete Form data captured:", payload);
-
-            // Push event to dataLayer
-            window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push({
-                event: "complete_form",
-                form_data: payload
-            });
-
-            console.log("Complete Form event pushed to dataLayer:", payload);
-
-            // Send event to Hightouch
-            window.htevents.track(
-                "complete_form",
-                payload,
-                {},
-                function() {
-                    console.log("Complete Form event successfully tracked to Hightouch:", payload);
-                }
-            );
-
-            // Optionally, submit the form after tracking
-            // form.submit();
-        });
-    } else {
-        console.warn("Form with class 'react-form-contents' not found.");
-    }
-}
-
-// Function to observe the DOM for the form
-function waitForForm() {
-    const observer = new MutationObserver((mutations, obs) => {
-        const form = document.querySelector(".react-form-contents");
-        if (form) {
-            obs.disconnect(); // Stop observing once the form is found
-            initializeFormEventListener(); // Initialize the event listener
-        }
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-}
-
-// Run the form listener initialization
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.querySelector(".react-form-contents");
-    if (form) {
-        initializeFormEventListener(); // If the form is already in the DOM
-    } else {
-        console.log("Waiting for form to load...");
-        waitForForm(); // Wait for the form to be dynamically added
-    }
-});
