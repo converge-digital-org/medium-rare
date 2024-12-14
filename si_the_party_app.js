@@ -2,6 +2,8 @@
 // VERSION 2.12
 // ADDED 'COMPLETE_FORM' EVENT
 
+console.log("Hightouch Events app.js file loaded");
+
 function removeEmptyProperties(obj) {
     if (typeof obj !== "object" || obj === null) return obj;
     for (const key in obj) if (obj.hasOwnProperty(key)) {
