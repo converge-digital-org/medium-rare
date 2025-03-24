@@ -205,11 +205,11 @@ function initializeFormEventListener() {
             event.preventDefault();
 
             const formData = {
-                first_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-fname-field")?.value || null,
-                last_name: document.querySelector("#name-yui_3_17_2_1_1733252193375_12106-lname-field")?.value || null,
-                email: document.querySelector("#email-yui_3_17_2_1_1733252193375_12107-field")?.value || null,
-                phone_country: document.querySelector("#phone-c48ec3b8-6c62-4462-aa21-af587054f3ef-country-code-field")?.value || null,
-                phone_number: document.querySelector("#phone-c48ec3b8-6c62-4462-aa21-af587054f3ef-input-field")?.value || null
+                first_name: document.querySelector('[name="fname"]')?.value || null,
+                last_name: document.querySelector('[name="lname"]')?.value || null,
+                email: document.querySelector("#email-yui_3_17_2_1_1742248911950_1511-field")?.value || null,
+                phone_country: document.querySelector("#phone-2bdfb254-0874-4f47-a13d-c658f83c6ff5-country-code-field")?.value || null,
+                phone_number: document.querySelector("#phone-2bdfb254-0874-4f47-a13d-c658f83c6ff5-input-field")?.value || null
             };
 
             const additionalParams = await getAdditionalParams();
