@@ -1,6 +1,6 @@
-// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 6/13/2025 AT 15:30 PT //
-// VERSION 3.1
-// ADDED 'COMPLETE_FORM' EVENT
+// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 6/13/2025 AT 3:34 PM PT //
+// VERSION 3.2
+// UPDATED SELECTORS FOR FORM FIELD CAPTURE –– STABLE VERSION
 
 function removeEmptyProperties(obj) {
     if (typeof obj !== "object" || obj === null) return obj;
@@ -12,10 +12,8 @@ function removeEmptyProperties(obj) {
     return Object.keys(obj).length === 0 && obj.constructor === Object ? {} : obj;
 }
 
-// Enable debugging in development mode
 window.htevents.debug(false);
 
-// Function to generate a 36-character, 128-bit GUID with hyphens
 function generateGUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -23,7 +21,6 @@ function generateGUID() {
     });
 }
 
-// Function to get or generate a unique Device ID (GUID)
 function getDeviceId() {
     let deviceId = localStorage.getItem('device_id');
     if (!deviceId) {
@@ -33,7 +30,6 @@ function getDeviceId() {
     return deviceId;
 }
 
-// Function to get or generate a unique Session ID (GUID)
 function getSessionId() {
     let sessionId = sessionStorage.getItem('session_id');
     if (!sessionId) {
@@ -43,7 +39,6 @@ function getSessionId() {
     return sessionId;
 }
 
-// Function to get "user_id" from the data layer
 function getUserIdFromDataLayer() {
     if (window.dataLayer) {
         const userEvent = window.dataLayer.find(item => item[2] && item[2].user_id);
@@ -52,65 +47,51 @@ function getUserIdFromDataLayer() {
     return null;
 }
 
-// Function to generate FBC (Facebook Click ID) parameter
 function getFBC(fbclid) {
     const cookieValue = document.cookie
         .split('; ')
         .find(row => row.startsWith('_fbc='))
         ?.split('=')[1];
-
     return cookieValue || generateFBC(fbclid);
 }
 
-// Function to generate FBC if not found
 function generateFBC(fbclid) {
     if (!fbclid) return null;
     const domain = window.location.hostname;
     const timestamp = Math.floor(Date.now() / 1000);
     const fbc = `fb.${domain}.${timestamp}.${fbclid}`;
-
     document.cookie = `_fbc=${fbc}; path=/; expires=${new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString()}; SameSite=Lax`;
-
     return fbc;
 }
 
-// Function to get or generate FBP (Facebook Browser ID) parameter
 function getFBP() {
     const cookieValue = document.cookie
         .split('; ')
         .find(row => row.startsWith('_fbp='))
         ?.split('=')[1];
-
     return cookieValue || generateFBP();
 }
 
-// Function to generate FBP if not found
 function generateFBP() {
     const version = 'fb.1.';
     const timestamp = Math.floor(new Date().getTime() / 1000);
     const randomNumber = Math.random().toString(36).substring(2, 15);
     const fbp = version + timestamp + '.' + randomNumber;
-
     document.cookie = `_fbp=${fbp}; path=/; expires=${new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toUTCString()}; SameSite=Lax`;
-
     return fbp;
 }
 
-// Function to get additional parameters (includes only "user_id")
 async function getAdditionalParams() {
     let ipData = {};
     try {
-        // Fetch IPv4 Address
         const ipv4Response = await fetch('https://api.ipify.org?format=json');
         const ipv4Data = await ipv4Response.json();
         ipData.ipAddress = ipv4Data.ip;
 
-        // Fetch IPv6 Address
         const ipv6Response = await fetch('https://api64.ipify.org?format=json');
         const ipv6Data = await ipv6Response.json();
         ipData.ipv6Address = ipv6Data.ip;
 
-        // Fetch Geo data using IPv4
         const geoResponse = await fetch(`https://ipapi.co/${ipv4Data.ip}/json/`);
         const geoData = await geoResponse.json();
         ipData = {
@@ -160,7 +141,6 @@ async function getAdditionalParams() {
     };
 }
 
-// Function to get the category from the dataLayer
 function getCategoryFromDataLayer() {
     if (window.dataLayer) {
         const ecommPageType = window.dataLayer.find(item => item.ecomm_pagetype);
@@ -169,7 +149,6 @@ function getCategoryFromDataLayer() {
     return 'Unknown';
 }
 
-// Function to track page views
 async function trackPageView() {
     const additionalParams = await getAdditionalParams();
     const eventName = document.title;
@@ -191,11 +170,8 @@ async function trackPageView() {
     );
 }
 
-// Track initial page view on load
 trackPageView();
 
-
-// Initialize Form Tracking
 function initializeFormEventListener() {
     const form = document.querySelector(".react-form-contents");
 
@@ -207,9 +183,9 @@ function initializeFormEventListener() {
             const formData = {
                 first_name: document.querySelector('[name="fname"]')?.value || null,
                 last_name: document.querySelector('[name="lname"]')?.value || null,
-                email: document.querySelector("#email-yui_3_17_2_1_1747767109309_4448-field")?.value || null,
-                phone_country: document.querySelector("#phone-7c253ee7-0978-4964-9c8d-1e8472bfedae-country-code-field")?.value || null,
-                phone_number: document.querySelector("#phone-7c253ee7-0978-4964-9c8d-1e8472bfedae-input-field")?.value || null
+                email: document.querySelector('input[type="email"]')?.value || null,
+                phone_country: document.querySelector('select[autocomplete*="country"], select[id*="country"]')?.value || null,
+                phone_number: document.querySelector('input[autocomplete*="tel"], input[type="tel"], input[id*="input-field"]')?.value || null
             };
 
             const additionalParams = await getAdditionalParams();
@@ -220,7 +196,6 @@ function initializeFormEventListener() {
 
             console.log("Complete Form data captured:", payload);
 
-            // Send to Hightouch
             window.htevents.track("complete_form", payload, {}, function() {
                 console.log("Complete Form event tracked:", payload);
             });
@@ -230,5 +205,6 @@ function initializeFormEventListener() {
     }
 }
 
-// Initialize form tracking
+document.addEventListener("DOMContentLoaded", () => {
     initializeFormEventListener();
+});
