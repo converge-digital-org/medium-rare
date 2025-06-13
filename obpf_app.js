@@ -1,5 +1,5 @@
-// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 12/9/2024 AT 9:28 AM PT //
-// VERSION 2.12
+// HIGHTOUCH EVENTS APP.JS FILE –– LAST UPDATED: 6/13/2025 AT 15:30 PT //
+// VERSION 3.1
 // ADDED 'COMPLETE_FORM' EVENT
 
 function removeEmptyProperties(obj) {
@@ -207,9 +207,9 @@ function initializeFormEventListener() {
             const formData = {
                 first_name: document.querySelector('[name="fname"]')?.value || null,
                 last_name: document.querySelector('[name="lname"]')?.value || null,
-                email: document.querySelector("#email-yui_3_17_2_1_1742248911950_1511-field")?.value || null,
-                phone_country: document.querySelector("#phone-2bdfb254-0874-4f47-a13d-c658f83c6ff5-country-code-field")?.value || null,
-                phone_number: document.querySelector("#phone-2bdfb254-0874-4f47-a13d-c658f83c6ff5-input-field")?.value || null
+                email: document.querySelector("#email-yui_3_17_2_1_1747767109309_4448-field")?.value || null,
+                phone_country: document.querySelector("#phone-7c253ee7-0978-4964-9c8d-1e8472bfedae-country-code-field")?.value || null,
+                phone_number: document.querySelector("#phone-7c253ee7-0978-4964-9c8d-1e8472bfedae-input-field")?.value || null
             };
 
             const additionalParams = await getAdditionalParams();
